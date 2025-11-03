@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة الألغاز</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: background 0.8s ease;
+        }
+
+        body.stage-1 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        body.stage-2 {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        body.stage-3 {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        body.stage-4 {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 700px;
+            width: 100%;
+            padding: 40px;
+            animation: fadeIn 0.5s;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            transition: color 0.5s;
+        }
+
+        .stage-title {
+            text-align: center;
+            font-size: 1.3em;
+            margin-bottom: 30px;
+            font-weight: bold;
+            opacity: 0.8;
+        }
+
+        body.stage-1 h1, body.stage-1 .stage-title { color: #667eea; }
+        body.stage-2 h1, body.stage-2 .stage-title { color: #f5576c; }
+        body.stage-3 h1, body.stage-3 .stage-title { color: #00f2fe; }
+        body.stage-4 h1, body.stage-4 .stage-title { color: #38f9d7; }
+
+        .hearts {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        .heart {
+            animation: heartBeat 1s infinite;
+        }
+
+        @keyframes heartBeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* Home Screen */
+        .home-screen {
+            display: block;
+        }
+
+        .home-screen.hidden {
+            display: none;
+        }
+
+        .stages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .stage-card {
+            background: white;
+            border: 3px solid;
+            border-radius: 15px;
+            padding: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            position: relative;
+        }
+
+        .stage-card.stage-1-card {
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        }
+
+        .stage-card.stage-2-card {
+            border-color: #f5576c;
+            background: linear-gradient(135deg, rgba(240, 147, 251, 0.1) 0%, rgba(245, 87, 108, 0.1) 100%);
+        }
+
+        .stage-card.stage-3-card {
+            border-color: #00f2fe;
+            background: linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(0, 242, 254, 0.1) 100%);
+        }
+
+        .stage-card.stage-4-card {
+            border-color: #38f9d7;
+            background: linear-gradient(135deg, rgba(67, 233, 123, 0.1) 0%, rgba(56, 249, 215, 0.1) 100%);
+        }
+
+        .stage-card:not(.locked):hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+        }
+
+        .stage-card.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+            filter: grayscale(0.5);
+        }
+
+        .stage-card.completed {
+            border-width: 4px;
+        }
+
+        .stage-card.completed::after {
+            content: "✓";
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #38ef7d;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .stage-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .stage-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .stage-1-card .stage-name { color: #667eea; }
+        .stage-2-card .stage-name { color: #f5576c; }
+        .stage-3-card .stage-name { color: #00f2fe; }
+        .stage-4-card .stage-name { color: #38f9d7; }
+
+        .stage-info {
+            color: #666;
+            font-size: 0.95em;
+        }
+
+        .lock-icon {
+            font-size: 2em;
+            margin-top: 10px;
+        }
+
+        /* Game Screen */
+        .game-screen {
+            display: none;
+        }
+
+        .game-screen.active {
+            display: block;
+        }
+
+        .progress-bar {
+            background: #e0e0e0;
+            height: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        body.stage-1 .progress-fill { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        body.stage-2 .progress-fill { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        body.stage-3 .progress-fill { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        body.stage-4 .progress-fill { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+
+        .question {
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            font-size: 1.3em;
+            text-align: center;
+            line-height: 1.6;
+            transition: background 0.5s;
+        }
+
+        body.stage-1 .question { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        body.stage-2 .question { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        body.stage-3 .question { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        body.stage-4 .question { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+
+        .options {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .option-btn {
+            background: white;
+            border: 3px solid;
+            padding: 20px;
+            border-radius: 12px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        body.stage-1 .option-btn { border-color: #667eea; color: #667eea; }
+        body.stage-2 .option-btn { border-color: #f5576c; color: #f5576c; }
+        body.stage-3 .option-btn { border-color: #00f2fe; color: #00f2fe; }
+        body.stage-4 .option-btn { border-color: #38f9d7; color: #38f9d7; }
+
+        body.stage-1 .option-btn:hover { background: #667eea; color: white; }
+        body.stage-2 .option-btn:hover { background: #f5576c; color: white; }
+        body.stage-3 .option-btn:hover { background: #00f2fe; color: white; }
+        body.stage-4 .option-btn:hover { background: #38f9d7; color: white; }
+
+        .option-btn:hover {
+            transform: scale(1.02);
+        }
+
+        .option-btn.correct {
+            background: #38ef7d !important;
+            border-color: #38ef7d !important;
+            color: white !important;
+            animation: pulse 0.5s;
+        }
+
+        .option-btn.wrong {
+            background: #ff6b6b !important;
+            border-color: #ff6b6b !important;
+            color: white !important;
+            animation: shake 0.5s;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .back-btn {
+            background: #764ba2;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .back-btn:hover {
+            background: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .game-over, .victory, .stage-complete {
+            text-align: center;
+            display: none;
+        }
+
+        .game-over.active, .victory.active, .stage-complete.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        .game-over h2 {
+            color: #ff6b6b;
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+
+        .victory h2, .stage-complete h2 {
+            color: #38ef7d;
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+
+        .restart-btn, .next-stage-btn {
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 12px;
+            font-size: 1.2em;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+
+        .restart-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .next-stage-btn {
+            background: linear-gradient(135deg, #38ef7d 0%, #43e97b 100%);
+        }
+
+        .restart-btn:hover, .next-stage-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+
+        .puzzle-container {
+            animation: slideIn 0.5s;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+    </style>
+</head>
+<body class="stage-1">
+    <div class="container">
+        <!-- Home Screen -->
+        <div id="homeScreen" class="home-screen">
+            <h1>🧩 لعبة الألغاز</h1>
+            <div class="stage-title">اختر المرحلة</div>
+            
+            <div class="hearts" id="heartsHome">
+                <span class="heart">❤️</span>
+                <span class="heart">❤️</span>
+                <span class="heart">❤️</span>
+            </div>
+
+            <div class="stages-grid" id="stagesGrid"></div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="gameScreen" class="game-screen">
+            <h1 id="mainTitle">🧩 لعبة الألغاز</h1>
+            <div class="stage-title" id="stageTitle">المرحلة 1 - سهلة</div>
+            
+            <div class="hearts" id="hearts">
+                <span class="heart">❤️</span>
+                <span class="heart">❤️</span>
+                <span class="heart">❤️</span>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressBar">0/5</div>
+            </div>
+
+            <div id="puzzleContainer" class="puzzle-container">
+                <div class="question" id="question"></div>
+                <div class="options" id="options"></div>
+                <button class="back-btn" onclick="backToHome()">العودة للقائمة الرئيسية</button>
+            </div>
+
+            <div id="stageComplete" class="stage-complete">
+                <h2>🎊 أحسنت!</h2>
+                <p style="font-size: 1.5em; margin: 20px 0;" id="stageCompleteText">لقد أكملت المرحلة الأولى!</p>
+                <button class="next-stage-btn" onclick="nextStageFromComplete()">الانتقال للمرحلة التالية</button>
+                <button class="back-btn" onclick="backToHome()">العودة للقائمة الرئيسية</button>
+            </div>
+
+            <div id="gameOver" class="game-over">
+                <h2>💔 انتهت اللعبة</h2>
+                <p style="font-size: 1.5em; margin: 20px 0;">لقد خسرت جميع القلوب!</p>
+                <button class="restart-btn" onclick="restartGame()">ابدأ من جديد</button>
+                <button class="back-btn" onclick="backToHome()">العودة للقائمة الرئيسية</button>
+            </div>
+
+            <div id="victory" class="victory">
+                <h2>🎉 مبروك!</h2>
+                <p style="font-size: 1.5em; margin: 20px 0;">لقد أكملت جميع المراحل بنجاح!</p>
+                <p style="font-size: 1.2em; margin: 20px 0;">أنت بطل حقيقي! 🏆</p>
+                <button class="restart-btn" onclick="restartGame()">العب مرة أخرى</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const stages = [
+            {
+                name: "المرحلة 1 - سهلة",
+                icon: "🌟",
+                puzzles: [
+                    {
+                        question: "ما الشيء الذي يمشي بلا أرجل ويبكي بلا عيون؟",
+                        options: ["الشمس", "السحاب", "الريح", "القمر"],
+                        correct: 1
+                    },
+                    {
+                        question: "له أسنان ولكنه لا يعض، ما هو؟",
+                        options: ["المشط", "المنشار", "السكين", "الشوكة"],
+                        correct: 0
+                    },
+                    {
+                        question: "ما الشيء الذي كلما أخذت منه كبر؟",
+                        options: ["البحر", "الحفرة", "الجبل", "السماء"],
+                        correct: 1
+                    },
+                    {
+                        question: "شيء له رقبة وليس له رأس؟",
+                        options: ["القميص", "الزجاجة", "الكأس", "القلم"],
+                        correct: 1
+                    },
+                    {
+                        question: "ما الشيء الذي له أذن ولا يسمع؟",
+                        options: ["الكأس", "الإبريق", "الباب", "الكتاب"],
+                        correct: 0
+                    }
+                ]
+            },
+            {
+                name: "المرحلة 2 - متوسطة",
+                icon: "🔥",
+                puzzles: [
+                    {
+                        question: "ما الشيء الذي كلما زاد نقص؟",
+                        options: ["الماء", "العمر", "المال", "الوقت"],
+                        correct: 1
+                    },
+                    {
+                        question: "شيء يوجد في السماء، وإذا أضفت له حرف أصبح في الأرض؟",
+                        options: ["نجم - منجم", "قمر - قمرة", "سحاب - سحابة", "كوكب - كواكب"],
+                        correct: 0
+                    },
+                    {
+                        question: "ما الشيء الذي يكتب ولا يقرأ؟",
+                        options: ["الطالب", "القلم", "الكتاب", "المعلم"],
+                        correct: 1
+                    },
+                    {
+                        question: "ما الشيء الذي له رأس ولا عين له؟",
+                        options: ["الإبرة", "القلم", "الدبوس", "الجبل"],
+                        correct: 2
+                    },
+                    {
+                        question: "ما الشيء الذي يحمل الطعام ولا يأكله؟",
+                        options: ["الطاولة", "الطبق", "الملعقة", "اليد"],
+                        correct: 1
+                    }
+                ]
+            },
+            {
+                name: "المرحلة 3 - صعبة",
+                icon: "⚡",
+                puzzles: [
+                    {
+                        question: "له عين ولا يرى، ما هو؟",
+                        options: ["الإبرة", "البحر", "السماء", "الليل"],
+                        correct: 0
+                    },
+                    {
+                        question: "ما الشيء الذي له أربع أرجل ولا يمشي؟",
+                        options: ["الحيوان", "الكرسي", "السيارة", "السرير"],
+                        correct: 1
+                    },
+                    {
+                        question: "ما الشيء الذي يتكلم بجميع اللغات؟",
+                        options: ["المترجم", "الصدى", "الإذاعة", "المعلم"],
+                        correct: 1
+                    },
+                    {
+                        question: "ما الشيء الذي له جلد وليس حيوان؟",
+                        options: ["الطبل", "الكتاب", "الحذاء", "كل ما سبق"],
+                        correct: 3
+                    },
+                    {
+                        question: "ما الشيء الذي يجري ولا يمشي؟",
+                        options: ["الحصان", "الماء", "الوقت", "الريح"],
+                        correct: 1
+                    }
+                ]
+            },
+            {
+                name: "المرحلة 4 - خبير",
+                icon: "👑",
+                puzzles: [
+                    {
+                        question: "ما الشيء الذي يطير بلا جناح ويبكي بلا عين؟",
+                        options: ["الطائرة", "السحاب", "الريح", "الدخان"],
+                        correct: 1
+                    },
+                    {
+                        question: "ما الشيء الذي يقرصك ولا تراه؟",
+                        options: ["البعوض", "الجوع", "النمل", "البرد"],
+                        correct: 1
+                    },
+                    {
+                        question: "ما الشيء الذي له أوراق وليس شجرة؟",
+                        options: ["الزهرة", "الكتاب", "الخس", "النعناع"],
+                        correct: 1
+                    },
+                    {
+                        question: "ما الشيء الذي يخترق الزجاج ولا يكسره؟",
+                        options: ["الصوت", "الضوء", "الهواء", "الماء"],
+                        correct: 1
+                    },
+                    {
+                        question: "ما الشيء الذي كلما ذبحته بكيت عليه؟",
+                        options: ["الخروف", "البصل", "الدجاج", "السمك"],
+                        correct: 1
+                    }
+                ]
+            }
+        ];
+
+        let hearts = 3;
+        let currentStage = 0;
+        let currentPuzzle = 0;
+        let completedStages = [];
+
+        function initHome() {
+            const grid = document.getElementById('stagesGrid');
+            grid.innerHTML = '';
+            
+            stages.forEach((stage, index) => {
+                const card = document.createElement('div');
+                card.className = `stage-card stage-${index + 1}-card`;
+                
+                const isCompleted = completedStages.includes(index);
+                const isLocked = index > 0 && !completedStages.includes(index - 1);
+                
+                if (isCompleted) card.classList.add('completed');
+                if (isLocked) card.classList.add('locked');
+                
+                card.innerHTML = `
+                    <div class="stage-icon">${stage.icon}</div>
+                    <div class="stage-name">${stage.name}</div>
+                    <div class="stage-info">${stage.puzzles.length} ألغاز</div>
+                    ${isLocked ? '<div class="lock-icon">🔒</div>' : ''}
+                `;
+                
+                if (!isLocked) {
+                    card.onclick = () => startStage(index);
+                }
+                
+                grid.appendChild(card);
+            });
+            
+            updateHearts();
+        }
+
+        function updateHearts() {
+            const containers = [document.getElementById('hearts'), document.getElementById('heartsHome')];
+            containers.forEach(container => {
+                if (container) {
+                    container.innerHTML = '';
+                    for (let i = 0; i < hearts; i++) {
+                        container.innerHTML += '<span class="heart">❤️</span>';
+                    }
+                    for (let i = hearts; i < 3; i++) {
+                        container.innerHTML += '<span class="heart">🖤</span>';
+                    }
+                }
+            });
+        }
+
+        function updateProgress() {
+            const total = stages[currentStage].puzzles.length;
+            document.getElementById('progressBar').textContent = `${currentPuzzle}/${total}`;
+            document.getElementById('progressBar').style.width = `${(currentPuzzle / total) * 100}%`;
+        }
+
+        function updateStageUI() {
+            document.body.className = `stage-${currentStage + 1}`;
+            document.getElementById('mainTitle').textContent = stages[currentStage].icon + ' لعبة الألغاز';
+            document.getElementById('stageTitle').textContent = stages[currentStage].name;
+        }
+
+        function startStage(stageIndex) {
+            currentStage = stageIndex;
+            currentPuzzle = 0;
+            document.getElementById('homeScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.add('active');
+            updateStageUI();
+            loadPuzzle();
+        }
+
+        function loadPuzzle() {
+            const puzzle = stages[currentStage].puzzles[currentPuzzle];
+            document.getElementById('question').textContent = puzzle.question;
+            
+            const optionsContainer = document.getElementById('options');
+            optionsContainer.innerHTML = '';
+            
+            puzzle.options.forEach((option, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = option;
+                btn.onclick = () => checkAnswer(index);
+                optionsContainer.appendChild(btn);
+            });
+            
+            updateProgress();
+        }
+
+        function checkAnswer(selectedIndex) {
+            const puzzle = stages[currentStage].puzzles[currentPuzzle];
+            const buttons = document.querySelectorAll('.option-btn');
+            
+            buttons.forEach(btn => btn.style.pointerEvents = 'none');
+            
+            if (selectedIndex === puzzle.correct) {
+                buttons[selectedIndex].classList.add('correct');
+                currentPuzzle++;
+                
+                setTimeout(() => {
+                    if (currentPuzzle >= stages[currentStage].puzzles.length) {
+                        if (!completedStages.includes(currentStage)) {
+                            completedStages.push(currentStage);
+                        }
+                        
+                        if (currentStage === stages.length - 1) {
+                            showVictory();
+                        } else {
+                            showStageComplete();
+                        }
+                    } else {
+                        loadPuzzle();
+                        buttons.forEach(btn => {
+                            btn.classList.remove('correct');
+                            btn.style.pointerEvents = 'auto';
+                        });
+                    }
+                }, 1500);
+            } else {
+                buttons[selectedIndex].classList.add('wrong');
+                hearts--;
+                updateHearts();
+                
+                if (hearts === 0) {
+                    setTimeout(showGameOver, 1000);
+                } else {
+                    setTimeout(() => {
+                        buttons[selectedIndex].classList.remove('wrong');
+                        buttons.forEach(btn => btn.style.pointerEvents = 'auto');
+                    }, 1000);
+                }
+            }
+        }
+
+        function showStageComplete() {
+            document.getElementById('puzzleContainer').style.display = 'none';
+            document.getElementById('stageComplete').classList.add('active');
+            document.getElementById('stageCompleteText').textContent = `لقد أكملت ${stages[currentStage].name}!`;
+        }
+
+        function nextStageFromComplete() {
+            currentStage++;
+            currentPuzzle = 0;
+            document.getElementById('stageComplete').classList.remove('active');
+            document.getElementById('puzzleContainer').style.display = 'block';
+            updateStageUI();
+            loadPuzzle();
+        }
+
+        function backToHome() {
+            document.getElementById('gameScreen').classList.remove('active');
+            document.getElementById('homeScreen').classList.remove('hidden');
+            document.getElementById('puzzleContainer').style.display = 'block';
+            document.getElementById('stageComplete').classList.remove('active');
+            document.getElementById('gameOver').classList.remove('active');
+            document.getElementById('victory').classList.remove('active');
+            initHome();
+        }
+
+        function showGameOver() {
+            document.getElementById('puzzleContainer').style.display = 'none';
+            document.getElementById('gameOver').classList.add('active');
+        }
+
+        function showVictory() {
+            document.getElementById('puzzleContainer').style.display = 'none';
+            document.getElementById('victory').classList.add('active');
+        }
+
+        function restartGame() {
+            hearts = 3;
+            currentStage = 0;
+            currentPuzzle = 0;
+            completedStages = [];
+            updateHearts();
+            
+            document.getElementById('gameOver').classList.remove('active');
+            document.getElementById('victory').classList.remove('active');
+            document.getElementById('gameScreen').classList.remove('active');
+            document.getElementById('homeScreen').classList.remove('hidden');
+            
+            initHome();
+        }
+
+        initHome();
+    </script>
+</body>
+</html>
